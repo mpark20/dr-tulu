@@ -22,6 +22,7 @@ SUPPORTED_TASKS = {
     "2wiki": "akariasai/2wiki_rand1k",
     "webwalker": "rl-research/webwalker_test",
     "webshaper": "rl-research/webshaper-heldout",
+    "medval": "stanfordmimi/MedVAL-Bench"
 }
 
 DATASET_URLS = {
@@ -143,6 +144,8 @@ def load_dataset(config: DatasetConfig) -> List[Dict]:
     elif config["name"] in ["2wiki", "webwalker", "webshaper"]:
         dataset_repo = SUPPORTED_TASKS[config["name"]]
         return load_shortformqa_data(dataset_repo, num_examples, shuffle)
+    elif config["name"] == "medval":
+        return load_medval(num_examples, shuffle)
     else:
         raise ValueError(
             f"Unsupported dataset: {config['name']}. Supported datasets: {list(SUPPORTED_TASKS.keys())}, browsecomp, simpleqa, healthbench, researchqa, deep_research_bench"
@@ -578,3 +581,46 @@ def load_dsqa_data(
         examples = examples[:num_examples]
 
     return examples
+
+
+def load_medval(num_examples: Optional[int] = None, shuffle: bool = False) -> List[Dict]:
+    data = datasets.load_dataset(SUPPORTED_TASKS["medval"], split="test")
+    task_prompts = {
+        "report2simplified": "Create a simplified, patient-friendly version of the reference.\n1. Reference Description: The original text containing medical terminology.\n2. Candidate Description: The simplified, patient-friendly, and easy-to-understand version of the text.\n",
+        "impression2simplified": "Create a simplified, patient-friendly version of the reference.\n1. Reference Description: The original text containing medical terminology.\n2. Candidate Description: The simplified, patient-friendly, and easy-to-understand version of the text.\n",
+        "report2impression": "Summarize the radiology report findings into an impression with minimal text.\n1. Reference Description: The findings section of the radiology report.\n2. Candidate Description: The impression section of the radiology report with minimal text.\n",
+        "bhc2spanish": "Translate the brief hospital course into Spanish.\n1. Reference Description: The brief hospital course section of the discharge note.\n2. Candidate Description: The Spanish-translated version of the brief hospital course.\n",
+        "query2question": "Summarize the patient health query into one question of 15 words or less.\n1. Reference Description: The patient health query.\n2. Candidate Description: The patient health question of 15 words or less.\n",
+        "dialogue2note": "Summarize the patient/doctor dialogue into an assessment and plan.\n1. Reference Description: The original patient/doctor dialogue.\n2. Candidate Description: The assessment and plan section.\n",
+        "medication2answer": "Answer the following medication-related patient health question.\n1. Reference Description: The medication-related patient health question.\n2. Candidate Description: The answer to the medication-related question.\n"
+    }
+    with open(Path(__file__).parent.parent.parent / "evaluation" / "medval_eval" / "medval_prompt.txt", "r") as f:
+        prompt_prefix = f.read()
+
+    examples = []
+    for example in data:
+        # Each record has keys "id", "task", "input", "reference_output", "output", "physician_error_assessment", "physician_risk_grade".
+        formatted_input = f"[[ ## instruction ## ]]\n{task_prompts[example['task']]}\n"
+        formatted_input += f"[[ ## reference ## ]]\n{example['input']}\n"
+        formatted_input += f"[[ ## candidate ## ]]\n{example['output']}\n"
+        problem = prompt_prefix + '\n' + formatted_input
+
+        examples.append({
+            "id": hashlib.md5(problem.encode()).hexdigest(),
+            "problem": problem,
+            "original_data": {
+                "original_id": example["id"],
+                "physician_error_assessment": example["physician_error_assessment"],
+                "physician_risk_grade": example["physician_error_assessment", "physician_risk_grade"]
+            }
+        })
+    
+    if shuffle:
+        random.seed(42)
+        random.shuffle(examples)
+
+    if num_examples:
+        examples = examples[:num_examples]
+
+    return examples
+    

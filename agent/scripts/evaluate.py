@@ -36,6 +36,7 @@ from evaluation.samplers.sampler.chat_completion_sampler import (
 )
 from evaluation.short_form_qa_eval.short_form_eval import ShortFormQAEval
 from evaluation.simple_qa_eval.simpleqa_eval import SimpleQAEval
+from evaluation.medval_eval.medval_eval import MedValEval
 
 load_dotenv()
 
@@ -235,6 +236,8 @@ def run_evaluation(
         eval_class = ShortFormQAEval(
             task=task, grader_model=grader_sampler, metric="judge"
         )
+    elif task == "medval":
+        eval_class = MedValEval()
     else:
         raise ValueError(f"Unsupported task type: {task}")
 

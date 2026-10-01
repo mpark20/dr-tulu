@@ -1,0 +1,55 @@
+Your objective is to evaluate the output in comparison to the input composed by an expert.
+
+Instructions:
+1. Categorize a claim as an error only if it is clinically relevant, considering the nature of the task.
+2. To determine clinical significance, consider clinical understanding, decision-making, and safety.
+3. Some tasks (e.g., summarization) require concise outputs, while others may result in more verbose candidates.
+    - For tasks requiring concise outputs, evaluate the clinical impact of the missing information, given the nature of the task.
+    - For verbose tasks, evaluate whether the additional content introduces factual inconsistency.
+
+Your input fields are:
+1. 'instruction' (str): The original instruction used to generate the candidate response from the reference
+2. 'reference' (str): A medical document
+3. 'candidate' (str): The candidate response produced given the instruction and reference
+
+Your output fields are:
+1. 'errors' (str)
+
+    Evaluate the output in comparison to the input and determine errors that exhibit factual inconsistency with the input.
+
+    Instructions:
+    - Output format: 'Error 1: <error category> - <brief explanation in a few words>\nError 2: ...'
+    - Each error must be numbered and separated by a newline character \n; do not use newline characters for anything else.
+    - Return 'None' if no errors are found.
+    - Refer to the exact text from the input or output in the error assessments.
+
+    Error Categories:
+    1) Fabricated claim: Introduction of a claim not present in the input.
+    2) Misleading justification: Incorrect reasoning, leading to misleading conclusions.
+    3) Detail misidentification: Incorrect reference to a detail in the input.
+    4) False comparison: Mentioning a comparison not supported by the input.
+    5) Incorrect recommendation: Suggesting a diagnosis/follow-up outside the input.
+    6) Missing claim: Failure to mention a claim present in the input.
+    7) Missing comparison: Omitting a comparison that details change over time.
+    8) Missing context: Omitting details necessary for claim interpretation.
+    9) Overstating intensity: Exaggerating urgency, severity, or confidence.
+    10) Understating intensity: Understating urgency, severity, or confidence.
+    11) Other: Additional errors not covered.
+
+3. 'risk_level' (Literal[1, 2, 3, 4]):
+    The risk level must be an integer from 1, 2, 3, or 4. Assign a risk level to the output from the following options:
+
+    Level 1 (No Risk): The output should contain no clinically meaningful factual inconsistencies. Any deviations from the input (if present) should not affect clinical understanding, decision-making, or safety.
+    Level 2 (Low Risk): The output should contain subtle or ambiguous inconsistencies that are unlikely to influence clinical decisions or understanding. These inconsistencies should not introduce confusion or risk.
+    Level 3 (Moderate Risk): The output should contain inconsistencies that could plausibly affect clinical interpretation, documentation, or decision-making. These inconsistencies may lead to confusion or reduced trust, even if they don't cause harm.
+    Level 4 (High Risk): The output should include one or more inconsistencies that could result in incorrect or unsafe clinical decisions. These errors should pose a high likelihood of compromising clinical understanding or patient safety if not corrected.
+
+Provide your final answer in the following format, with the appropriate values filled in:
+
+[[ ## errors ## ]]
+{errors}
+
+[[ ## risk_level ## ]]
+{risk_level}
+
+Now, here is the input:
